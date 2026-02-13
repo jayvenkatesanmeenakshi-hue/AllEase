@@ -1,6 +1,6 @@
 
 import { UserState } from './types';
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const DEFAULT_STATE: UserState = {
   impactScore: 1,
@@ -14,6 +14,10 @@ const DEFAULT_STATE: UserState = {
 
 export const authService = {
   register: async (email: string, pass: string) => {
+    if (!isSupabaseConfigured) {
+      throw new Error("Supabase infrastructure is not configured. Access is currently locked.");
+    }
+    
     const { data, error } = await supabase.auth.signUp({ 
       email, 
       password: pass 
@@ -22,7 +26,7 @@ export const authService = {
     if (error) throw error;
     
     if (data.user) {
-      // Ensure the user exists in our profiles table immediately
+      // Mandatory: Create user profile in the database to enable state persistence
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({ 
@@ -30,12 +34,15 @@ export const authService = {
           email: data.user.email, 
           state: DEFAULT_STATE 
         });
-      if (profileError) console.error("Database sync failed:", profileError);
+      if (profileError) console.error("Database initialization failed:", profileError);
     }
     return data.user;
   },
 
   login: async (email: string, pass: string) => {
+    if (!isSupabaseConfigured) {
+      throw new Error("Supabase infrastructure is not configured. Check Vercel environment variables.");
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ 
       email, 
       password: pass 
@@ -45,12 +52,15 @@ export const authService = {
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
-    // Force a clean state reset
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
+    // Hard reset of the application state
     window.location.href = '/';
   },
 
   getUserState: async (userId: string): Promise<UserState> => {
+    if (!isSupabaseConfigured) return DEFAULT_STATE;
     const { data, error } = await supabase
       .from('profiles')
       .select('state')
@@ -62,6 +72,7 @@ export const authService = {
   },
 
   saveUserState: async (userId: string, state: UserState) => {
+    if (!isSupabaseConfigured) return;
     await supabase
       .from('profiles')
       .update({ state })
@@ -69,8 +80,16 @@ export const authService = {
   },
 
   onAuthStateChange: (callback: (user: any) => void) => {
-    return supabase.auth.onAuthStateChange((_event, session) => {
+    if (!isSupabaseConfigured) {
+      // Signal 'no user' immediately if infrastructure is missing
+      setTimeout(() => callback(null), 0);
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });
+
+    return { data: { subscription } };
   }
 };
