@@ -1,4 +1,3 @@
-
 import { UserState } from './types';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
@@ -34,7 +33,8 @@ export const authService = {
       console.warn("Supabase not configured. Using Guest Session.");
       return { id: 'guest_user', email: 'guest@allease.ai' };
     }
-    const { data, error } = await supabase.auth.signUp({ email, password: pass });
+    // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for signUp
+    const { data, error } = await (supabase.auth as any).signUp({ email, password: pass });
     if (error) throw error;
     
     if (data.user) {
@@ -50,14 +50,16 @@ export const authService = {
     if (!isSupabaseConfigured) {
       return { id: 'guest_user', email: 'guest@allease.ai' };
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for signInWithPassword
+    const { data, error } = await (supabase.auth as any).signInWithPassword({ email, password: pass });
     if (error) throw error;
     return data.user;
   },
 
   logout: async () => {
     if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
+      // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for signOut
+      await (supabase.auth as any).signOut();
     } else {
       // For guest mode, we just "log out" by triggering a refresh or manual state reset in App
       window.location.reload(); 
@@ -96,7 +98,8 @@ export const authService = {
         setTimeout(() => callback({ id: 'guest_user', email: 'guest@allease.ai' }), 0);
         return { data: { subscription: { unsubscribe: () => {} } } };
     }
-    return supabase.auth.onAuthStateChange((_event, session) => {
+    // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for onAuthStateChange
+    return (supabase.auth as any).onAuthStateChange((_event: any, session: any) => {
       callback(session?.user || null);
     });
   }

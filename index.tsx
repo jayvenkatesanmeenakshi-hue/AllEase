@@ -3,19 +3,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-const rootElement = document.getElementById('root');
-
-if (rootElement) {
-  try {
-    const root = ReactDOM.createRoot(rootElement);
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
-  } catch (err) {
-    console.error("AllEase: Render failure during hydration:", err);
-  }
+const container = document.getElementById('root');
+if (container) {
+  const root = ReactDOM.createRoot(container);
+  root.render(<App />);
 } else {
-  console.error("AllEase: Fatal error - Root element not found in DOM.");
+  console.error("Critical: Root element 'root' not found in document.");
 }
