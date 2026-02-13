@@ -1,3 +1,4 @@
+
 import { UserState } from './types';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
@@ -33,14 +34,23 @@ export const authService = {
       console.warn("Supabase not configured. Using Guest Session.");
       return { id: 'guest_user', email: 'guest@allease.ai' };
     }
-    // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for signUp
-    const { data, error } = await (supabase.auth as any).signUp({ email, password: pass });
+    
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password: pass 
+    });
+    
     if (error) throw error;
     
     if (data.user) {
+      // Initialize the user profile with the default optimization state
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({ id: data.user.id, email: data.user.email, state: DEFAULT_STATE });
+        .insert({ 
+          id: data.user.id, 
+          email: data.user.email, 
+          state: DEFAULT_STATE 
+        });
       if (profileError) console.error("Profile creation error:", profileError);
     }
     return data.user;
@@ -50,18 +60,18 @@ export const authService = {
     if (!isSupabaseConfigured) {
       return { id: 'guest_user', email: 'guest@allease.ai' };
     }
-    // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for signInWithPassword
-    const { data, error } = await (supabase.auth as any).signInWithPassword({ email, password: pass });
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password: pass 
+    });
     if (error) throw error;
     return data.user;
   },
 
   logout: async () => {
     if (isSupabaseConfigured) {
-      // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for signOut
-      await (supabase.auth as any).signOut();
+      await supabase.auth.signOut();
     } else {
-      // For guest mode, we just "log out" by triggering a refresh or manual state reset in App
       window.location.reload(); 
     }
   },
@@ -94,12 +104,10 @@ export const authService = {
 
   onAuthStateChange: (callback: (user: any) => void) => {
     if (!isSupabaseConfigured) {
-        // Automatically provide a guest user if no cloud config exists
         setTimeout(() => callback({ id: 'guest_user', email: 'guest@allease.ai' }), 0);
         return { data: { subscription: { unsubscribe: () => {} } } };
     }
-    // Fixed: Use type assertion to bypass property existence errors on SupabaseAuthClient for onAuthStateChange
-    return (supabase.auth as any).onAuthStateChange((_event: any, session: any) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });
   }
