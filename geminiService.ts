@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { TopicStructure, ActivityStep, ActivityGuide, QuizQuestion } from "./types";
+import { TopicStructure, ActivityStep, ActivityGuide, QuizQuestion } from "./types.ts";
 
 // Always use the process.env.API_KEY string directly when initializing the @google/genai client instance.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -16,7 +16,7 @@ const SUPPORT_UNIT_PROMPT = `
 You are a supportive, non-intrusive personal assistance unit (AllEase Support). 
 Your goal is to provide brief, gentle validation of the user's current mood.
 Be serene, calm, and professional. Do not invade privacy or override user autonomy.
-Provide a "serene environment" image prompt for a real-world location (e.g., a quiet library, a misty mountain, a soft beach at dusk).
+Provide a "serene environment" image prompt for a real-world location.
 Output JSON only.
 `;
 
@@ -71,17 +71,15 @@ export async function getSupportiveContent(mood: string): Promise<{ text: string
     }
   });
 
-  // Extract text content using the .text property
   const data = JSON.parse(response.text || '{}');
   let visual = "";
 
   try {
     const imageGen = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
-      contents: { parts: [{ text: `Professional documentary photography, serene and quiet real-world location, soft atmospheric lighting, natural textures, high fidelity, realistic: ${data.sereneImagePrompt}` }] },
+      contents: { parts: [{ text: `Professional documentary photography, serene real-world location: ${data.sereneImagePrompt}` }] },
       config: { imageConfig: { aspectRatio: "16:9" } }
     });
-    // Find the image part in the response parts to handle nano banana series models correctly.
     const part = imageGen.candidates[0].content.parts.find(p => p.inlineData);
     if (part?.inlineData) visual = `data:image/png;base64,${part.inlineData.data}`;
   } catch (e) {
@@ -133,7 +131,6 @@ export async function getActivityGuide(activity: string): Promise<ActivityGuide>
     }
   });
 
-  // Extract text content using the .text property
   const guideData: ActivityGuide = JSON.parse(response.text || '{}');
   
   if (guideData.steps) {
@@ -141,10 +138,9 @@ export async function getActivityGuide(activity: string): Promise<ActivityGuide>
       try {
         const imageGen = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
-          contents: { parts: [{ text: `High-quality professional photography, real-world documentary style, clean environment, natural lighting: ${step.imagePrompt}` }] },
+          contents: { parts: [{ text: `High-quality documentation style: ${step.imagePrompt}` }] },
           config: { imageConfig: { aspectRatio: "16:9" } }
         });
-        // Find the image part in the response parts
         const part = imageGen.candidates[0].content.parts.find(p => p.inlineData);
         if (part?.inlineData) return { ...step, visual: `data:image/png;base64,${part.inlineData.data}` };
       } catch (e) { console.warn(e); }
@@ -184,7 +180,6 @@ export async function getTopicStructure(topic: string): Promise<TopicStructure> 
       }
     }
   });
-  // Extract text content using the .text property
   return JSON.parse(response.text || '{}');
 }
 
@@ -196,7 +191,6 @@ export async function getSubtopicExplanation(topic: string, subtopic: string): P
       systemInstruction: SHARED_SILENT_SAFETY_PROMPT,
     }
   });
-  // Extract text content using the .text property
   return response.text || "Report link broken.";
 }
 
@@ -210,7 +204,6 @@ export async function speakPhrase(text: string): Promise<void> {
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } }
       }
     });
-    // Access base64 audio data from the first part's inlineData
     const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     if (base64Audio) {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -244,6 +237,5 @@ export async function generateQuiz(topic: TopicStructure): Promise<QuizQuestion[
       }
     }
   });
-  // Extract text content using the .text property
   return JSON.parse(response.text || '[]');
 }

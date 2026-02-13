@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { UserState, TopicStructure, EcoShift } from './types';
-import { authService } from './authService';
-import { isSupabaseConfigured } from './supabaseClient';
-import Header from './components/Header';
-import Navigation from './components/Navigation';
-import AuthPage from './components/AuthPage';
+import { UserState, TopicStructure, EcoShift } from './types.ts';
+import { authService } from './authService.ts';
+import { isSupabaseConfigured } from './supabaseClient.ts';
+import Header from './components/Header.tsx';
+import Navigation from './components/Navigation.tsx';
+import AuthPage from './components/AuthPage.tsx';
 
-import MindModule from './components/modules/MindModule';
-import SkillsModule from './components/modules/SkillsModule';
-import EcoModule from './components/modules/EcoModule';
+import MindModule from './components/modules/MindModule.tsx';
+import SkillsModule from './components/modules/SkillsModule.tsx';
+import EcoModule from './components/modules/EcoModule.tsx';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -27,7 +27,7 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Strict Auth Synchronization - Listener only sets user from Supabase provider
+    // Strict Auth Synchronization
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
       if (mounted) {
         setCurrentUser(user);
@@ -41,7 +41,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Persistent User State Synchronization - Fetches real DB data once authenticated
   useEffect(() => {
     const fetchState = async () => {
       if (currentUser && currentUser.id) {
@@ -111,12 +110,10 @@ const App: React.FC = () => {
     );
   }
 
-  // ENFORCED LOGIN GATE - If no currentUser is present, render AuthPage
   if (!currentUser) {
     return (
       <AuthPage 
         onAuthSuccess={(email) => {
-          // Success is handled via onAuthStateChange listener in the main useEffect
           console.log(`Auth initiated for ${email}`);
         }} 
       />
@@ -130,9 +127,9 @@ const App: React.FC = () => {
         
         {!isSupabaseConfigured && (
           <div className="mb-8 p-10 bg-red-50 border-2 border-red-200 rounded-[3rem] text-center shadow-xl">
-             <h3 className="text-red-800 font-black text-xl uppercase tracking-tighter mb-2">Configuration Fault</h3>
+             <h3 className="text-red-800 font-black text-xl uppercase tracking-tighter mb-2">Configuration Vault Locked</h3>
              <p className="text-[11px] font-black text-red-700 uppercase tracking-[0.3em]">
-               Database environment variables (SUPABASE_URL / ANON_KEY) are missing. Authentication and persistence are offline.
+               System variables are not detected. Verify SUPABASE_URL and SUPABASE_ANON_KEY in your deployment environment.
              </p>
           </div>
         )}
@@ -169,7 +166,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[11px] text-slate-300 font-black uppercase tracking-[0.5em] mono pb-12">
-          AllEase Encrypted Cloud • User Identity: {currentUser.email}
+          AllEase Encrypted Cloud • Identity: {currentUser.email}
         </footer>
       </div>
     </div>
