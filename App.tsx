@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserState, TopicStructure, EcoShift } from './types';
-import { authService } from './authService';
-import { isSupabaseConfigured } from './supabaseClient';
-import Header from './components/Header';
-import Navigation from './components/Navigation';
-import MindModule from './components/modules/MindModule';
-import SkillsModule from './components/modules/SkillsModule';
-import EcoModule from './components/modules/EcoModule';
-import AuthPage from './components/AuthPage';
+import { UserState, TopicStructure, EcoShift } from './types.ts';
+import { authService } from './authService.ts';
+import { isSupabaseConfigured } from './supabaseClient.ts';
+import Header from './components/Header.tsx';
+import Navigation from './components/Navigation.tsx';
+import MindModule from './components/modules/MindModule.tsx';
+import SkillsModule from './components/modules/SkillsModule.tsx';
+import EcoModule from './components/modules/EcoModule.tsx';
+import AuthPage from './components/AuthPage.tsx';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -25,11 +25,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-        setLoading(false);
-        return;
-    }
-
+    // Initializing auth state and handling guest auto-login if Supabase is missing
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
       setCurrentUser(user);
       if (!user) {
@@ -42,19 +38,25 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchState = async () => {
-      if (currentUser && isSupabaseConfigured) {
+      if (currentUser) {
         setLoading(true);
-        const state = await authService.getUserState(currentUser.id);
-        setUserState(state);
-        setLoading(false);
+        try {
+          const state = await authService.getUserState(currentUser.id);
+          setUserState(state);
+        } catch (err) {
+          console.error("Failed to load user state", err);
+        } finally {
+          setLoading(false);
+        }
       }
     };
     fetchState();
   }, [currentUser]);
 
+  // Debounced save to handle persistent storage (Local or Supabase)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (currentUser && isSupabaseConfigured) {
+      if (currentUser) {
         authService.saveUserState(currentUser.id, userState);
       }
     }, 2000);
@@ -93,45 +95,34 @@ const App: React.FC = () => {
     incrementImpact(3);
   };
 
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
-        <div className="max-w-md w-full bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl text-center space-y-8">
-          <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
-             <svg className="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Setup Required</h2>
-          <p className="text-slate-500 text-sm leading-relaxed">
-            AllEase requires Supabase credentials for cloud synchronization.
-          </p>
-          <div className="space-y-4 text-left bg-slate-50 p-6 rounded-2xl border border-slate-100">
-             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Environment keys:</p>
-             <code className="block text-[11px] font-mono text-teal-700 font-bold">SUPABASE_URL</code>
-             <code className="block text-[11px] font-mono text-teal-700 font-bold">SUPABASE_ANON_KEY</code>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (loading && currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Syncing User Profile...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Initialising AllEase Hub...</p>
         </div>
       </div>
     );
   }
 
+  // If no user and not guest-logged in yet
   if (!currentUser) return <AuthPage onAuthSuccess={() => {}} />;
 
   return (
-    <div className="min-h-screen pb-40 bg-[#F8FAFC] text-[#1E293B] selection:bg-[#0D9488] selection:text-white">
+    <div className="min-h-screen pb-40 bg-[#F8FAFC] text-[#1E293B] selection:bg-[#0D9488] selection:text-white fade-entry">
       <div className="max-w-5xl mx-auto px-4 pt-10">
         <Header score={userState.impactScore} onLogout={() => authService.logout()} />
         
+        {!isSupabaseConfigured && (
+          <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
+             <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
+               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+               Guest Mode Active • Local Data Storage
+             </p>
+          </div>
+        )}
+
         <main className="mt-12">
           {activeTab === 'eco' && (
             <EcoModule 
@@ -160,7 +151,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase Optimization Engine v1.0.2
+          AllEase Optimization Engine v1.0.5 • {isSupabaseConfigured ? 'Sync Active' : 'Offline Instance'}
         </footer>
       </div>
     </div>

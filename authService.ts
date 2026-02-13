@@ -12,9 +12,28 @@ const DEFAULT_STATE: UserState = {
   dailyActionCount: 0
 };
 
+const LOCAL_STORAGE_KEY = 'allease_guest_state';
+
+const getLocalState = (): UserState => {
+  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (!saved) return DEFAULT_STATE;
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return DEFAULT_STATE;
+  }
+};
+
+const saveLocalState = (state: UserState) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+};
+
 export const authService = {
   register: async (email: string, pass: string) => {
-    if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
+    if (!isSupabaseConfigured) {
+      console.warn("Supabase not configured. Using Guest Session.");
+      return { id: 'guest_user', email: 'guest@allease.ai' };
+    }
     const { data, error } = await supabase.auth.signUp({ email, password: pass });
     if (error) throw error;
     
@@ -28,7 +47,9 @@ export const authService = {
   },
 
   login: async (email: string, pass: string) => {
-    if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
+    if (!isSupabaseConfigured) {
+      return { id: 'guest_user', email: 'guest@allease.ai' };
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
     return data.user;
@@ -37,11 +58,16 @@ export const authService = {
   logout: async () => {
     if (isSupabaseConfigured) {
       await supabase.auth.signOut();
+    } else {
+      // For guest mode, we just "log out" by triggering a refresh or manual state reset in App
+      window.location.reload(); 
     }
   },
 
   getUserState: async (userId: string): Promise<UserState> => {
-    if (!isSupabaseConfigured) return DEFAULT_STATE;
+    if (!isSupabaseConfigured || userId === 'guest_user') {
+      return getLocalState();
+    }
     const { data, error } = await supabase
       .from('profiles')
       .select('state')
@@ -53,7 +79,10 @@ export const authService = {
   },
 
   saveUserState: async (userId: string, state: UserState) => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || userId === 'guest_user') {
+      saveLocalState(state);
+      return;
+    }
     const { error } = await supabase
       .from('profiles')
       .update({ state })
@@ -63,7 +92,8 @@ export const authService = {
 
   onAuthStateChange: (callback: (user: any) => void) => {
     if (!isSupabaseConfigured) {
-        // Return a mock subscription if not configured
+        // Automatically provide a guest user if no cloud config exists
+        setTimeout(() => callback({ id: 'guest_user', email: 'guest@allease.ai' }), 0);
         return { data: { subscription: { unsubscribe: () => {} } } };
     }
     return supabase.auth.onAuthStateChange((_event, session) => {
