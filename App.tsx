@@ -25,50 +25,44 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Safety fallback to prevent infinite loading if auth listener doesn't fire
-    const loadingTimeout = setTimeout(() => {
-      if (loading && !currentUser) {
-        console.warn("Auth check timed out, proceeding to entry state.");
-        setLoading(false);
-      }
-    }, 3000);
+    // Immediate fallback for guest mode if cloud is not active
+    if (!isSupabaseConfigured) {
+      setCurrentUser({ id: 'guest_user', email: 'guest@allease.ai' });
+      setLoading(false);
+      return;
+    }
 
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
-      clearTimeout(loadingTimeout);
       setCurrentUser(user);
       setLoading(false);
     });
 
     return () => {
-      subscription.unsubscribe();
-      clearTimeout(loadingTimeout);
+      subscription?.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
     const fetchState = async () => {
       if (currentUser) {
-        setLoading(true);
         try {
           const state = await authService.getUserState(currentUser.id);
-          setUserState(state);
+          if (state) setUserState(state);
         } catch (err) {
           console.error("Failed to load user state", err);
-        } finally {
-          setLoading(false);
         }
       }
     };
-    fetchState();
+    if (currentUser) fetchState();
   }, [currentUser]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentUser) {
+    if (currentUser) {
+      const timer = setTimeout(() => {
         authService.saveUserState(currentUser.id, userState);
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
   }, [userState, currentUser]);
 
   const incrementImpact = (percentGain: number) => {
@@ -108,7 +102,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Waking AllEase Systems...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Booting Systems...</p>
         </div>
       </div>
     );
@@ -125,7 +119,7 @@ const App: React.FC = () => {
           <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Guest Instance • Local Session
+               Guest Mode • Local Only
              </p>
           </div>
         )}
@@ -158,7 +152,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase Optimization Engine v1.0.7 • {isSupabaseConfigured ? 'Sync: ACTIVE' : 'Sync: STANDALONE'}
+          AllEase v1.0.8 • {isSupabaseConfigured ? 'Sync: Enabled' : 'Sync: Local'}
         </footer>
       </div>
     </div>

@@ -3,13 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-const mount = () => {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    console.error("Critical: Root element 'root' not found in DOM.");
-    return;
-  }
-  
+const rootElement = document.getElementById('root');
+
+if (!rootElement) {
+  console.error("Critical: Root element 'root' not found in DOM.");
+} else {
   try {
     const root = ReactDOM.createRoot(rootElement);
     root.render(
@@ -17,14 +15,8 @@ const mount = () => {
         <App />
       </React.StrictMode>
     );
-    console.log("AllEase: Optimization Engine Mounted Successfully.");
+    console.log("AllEase: Optimization Engine Mounted.");
   } catch (error) {
     console.error("AllEase: Failed to mount application:", error);
   }
-};
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mount);
-} else {
-  mount();
 }
