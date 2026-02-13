@@ -1,20 +1,12 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const getEnvVar = (key: string): string | undefined => {
-  try {
-    // Access window.process to be safer in some browser environments
-    const env = (window as any).process?.env || (typeof process !== 'undefined' ? process.env : {});
-    return env[key];
-  } catch (e) {
-    return undefined;
-  }
-};
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = getEnvVar('SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('SUPABASE_ANON_KEY');
+// Accessing environment variables directly for strict production behavior
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
+// If these are missing, createClient will throw a descriptive error for the developer
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Export a simple boolean for UI hints
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
-
-export const supabase: SupabaseClient = isSupabaseConfigured 
-  ? createClient(supabaseUrl!, supabaseAnonKey!) 
-  : null as any;

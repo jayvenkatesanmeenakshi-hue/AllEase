@@ -27,7 +27,7 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Strict Auth Synchronization
+    // Strict Auth Synchronization - Listener only sets user from Supabase provider
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
       if (mounted) {
         setCurrentUser(user);
@@ -41,10 +41,10 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Persistent User State Synchronization
+  // Persistent User State Synchronization - Fetches real DB data once authenticated
   useEffect(() => {
     const fetchState = async () => {
-      if (currentUser) {
+      if (currentUser && currentUser.id) {
         try {
           const state = await authService.getUserState(currentUser.id);
           if (state) setUserState(state);
@@ -66,7 +66,7 @@ const App: React.FC = () => {
         dailyActionCount: prev.dailyActionCount + 1
       };
       
-      if (currentUser) {
+      if (currentUser && currentUser.id) {
         authService.saveUserState(currentUser.id, newState);
       }
       
@@ -82,7 +82,7 @@ const App: React.FC = () => {
         ...prev,
         exploredTopics: [topic, ...prev.exploredTopics].slice(0, 10)
       };
-      if (currentUser) authService.saveUserState(currentUser.id, newState);
+      if (currentUser && currentUser.id) authService.saveUserState(currentUser.id, newState);
       return newState;
     });
     incrementImpact(1);
@@ -94,7 +94,7 @@ const App: React.FC = () => {
         ...prev,
         ecoHistory: [shift, ...prev.ecoHistory].slice(0, 50)
       };
-      if (currentUser) authService.saveUserState(currentUser.id, newState);
+      if (currentUser && currentUser.id) authService.saveUserState(currentUser.id, newState);
       return newState;
     });
     incrementImpact(3);
@@ -104,16 +104,23 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="text-center space-y-6">
-          <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto shadow-xl"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-[0.5em] mono animate-pulse">Initializing Secure Context...</p>
+          <div className="w-16 h-16 border-4 border-slate-900 border-t-teal-600 rounded-full animate-spin mx-auto shadow-xl"></div>
+          <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.5em] mono animate-pulse">Establishing Secure Session...</p>
         </div>
       </div>
     );
   }
 
-  // ENFORCED LOGIN GATE - ABSOLUTELY NO ENTRY WITHOUT USER
+  // ENFORCED LOGIN GATE - If no currentUser is present, render AuthPage
   if (!currentUser) {
-    return <AuthPage onAuthSuccess={(email) => console.log(`Session authorized for: ${email}`)} />;
+    return (
+      <AuthPage 
+        onAuthSuccess={(email) => {
+          // Success is handled via onAuthStateChange listener in the main useEffect
+          console.log(`Auth initiated for ${email}`);
+        }} 
+      />
+    );
   }
 
   return (
@@ -122,10 +129,10 @@ const App: React.FC = () => {
         <Header score={userState.impactScore} onLogout={() => authService.logout()} />
         
         {!isSupabaseConfigured && (
-          <div className="mb-8 px-8 py-3 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
-             <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.3em] flex items-center gap-3">
-               <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-               Local Sandbox Mode • Database Emulation Active
+          <div className="mb-8 p-10 bg-red-50 border-2 border-red-200 rounded-[3rem] text-center shadow-xl">
+             <h3 className="text-red-800 font-black text-xl uppercase tracking-tighter mb-2">Configuration Fault</h3>
+             <p className="text-[11px] font-black text-red-700 uppercase tracking-[0.3em]">
+               Database environment variables (SUPABASE_URL / ANON_KEY) are missing. Authentication and persistence are offline.
              </p>
           </div>
         )}
@@ -144,7 +151,7 @@ const App: React.FC = () => {
                 const log = { id: Date.now().toString(), mood, timestamp: Date.now() };
                 setUserState(prev => {
                   const newState = { ...prev, moodHistory: [log, ...prev.moodHistory].slice(0, 50) };
-                  if (currentUser) authService.saveUserState(currentUser.id, newState);
+                  if (currentUser && currentUser.id) authService.saveUserState(currentUser.id, newState);
                   return newState;
                 });
                 incrementImpact(1);
@@ -162,7 +169,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[11px] text-slate-300 font-black uppercase tracking-[0.5em] mono pb-12">
-          AllEase Optimization Cloud • Active User: {currentUser.email}
+          AllEase Encrypted Cloud • User Identity: {currentUser.email}
         </footer>
       </div>
     </div>

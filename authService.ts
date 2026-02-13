@@ -1,5 +1,6 @@
+
 import { UserState } from './types';
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase } from './supabaseClient';
 
 const DEFAULT_STATE: UserState = {
   impactScore: 1,
@@ -11,34 +12,8 @@ const DEFAULT_STATE: UserState = {
   dailyActionCount: 0
 };
 
-const LOCAL_STORAGE_KEY = 'allease_state_v1';
-
-const getLocalState = (): UserState => {
-  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (!saved) return DEFAULT_STATE;
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return DEFAULT_STATE;
-  }
-};
-
-const saveLocalState = (state: UserState) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
-};
-
 export const authService = {
   register: async (email: string, pass: string) => {
-    if (!isSupabaseConfigured) {
-      // If Supabase isn't setup, we simulate a successful login for the requested email
-      console.warn("Supabase not configured. Simulating registration.");
-      const guestUser = { id: 'guest_' + btoa(email), email };
-      localStorage.setItem('allease_active_session', JSON.stringify(guestUser));
-      // Reload or trigger a state update manually since we aren't using Supabase's real listener
-      window.location.reload();
-      return guestUser;
-    }
-    
     const { data, error } = await supabase.auth.signUp({ 
       email, 
       password: pass 
@@ -47,6 +22,7 @@ export const authService = {
     if (error) throw error;
     
     if (data.user) {
+      // Ensure the user exists in our profiles table immediately
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({ 
@@ -54,19 +30,12 @@ export const authService = {
           email: data.user.email, 
           state: DEFAULT_STATE 
         });
-      if (profileError) console.error("Profile initialization failed:", profileError);
+      if (profileError) console.error("Database sync failed:", profileError);
     }
     return data.user;
   },
 
   login: async (email: string, pass: string) => {
-    if (!isSupabaseConfigured) {
-      console.warn("Supabase not configured. Simulating login.");
-      const guestUser = { id: 'guest_' + btoa(email), email };
-      localStorage.setItem('allease_active_session', JSON.stringify(guestUser));
-      window.location.reload();
-      return guestUser;
-    }
     const { data, error } = await supabase.auth.signInWithPassword({ 
       email, 
       password: pass 
@@ -76,17 +45,12 @@ export const authService = {
   },
 
   logout: async () => {
-    localStorage.removeItem('allease_active_session');
-    if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
-    }
-    window.location.reload();
+    await supabase.auth.signOut();
+    // Force a clean state reset
+    window.location.href = '/';
   },
 
   getUserState: async (userId: string): Promise<UserState> => {
-    if (!isSupabaseConfigured || userId.startsWith('guest_')) {
-      return getLocalState();
-    }
     const { data, error } = await supabase
       .from('profiles')
       .select('state')
@@ -98,10 +62,6 @@ export const authService = {
   },
 
   saveUserState: async (userId: string, state: UserState) => {
-    if (!isSupabaseConfigured || userId.startsWith('guest_')) {
-      saveLocalState(state);
-      return;
-    }
     await supabase
       .from('profiles')
       .update({ state })
@@ -109,28 +69,8 @@ export const authService = {
   },
 
   onAuthStateChange: (callback: (user: any) => void) => {
-    // Check local session first
-    const localSession = localStorage.getItem('allease_active_session');
-    if (localSession) {
-      try {
-        const user = JSON.parse(localSession);
-        setTimeout(() => callback(user), 0);
-      } catch (e) {
-        localStorage.removeItem('allease_active_session');
-      }
-    }
-
-    if (!isSupabaseConfigured) {
-      if (!localSession) {
-        setTimeout(() => callback(null), 0);
-      }
-      return { data: { subscription: { unsubscribe: () => {} } } };
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });
-
-    return { data: { subscription } };
   }
 };
