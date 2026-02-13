@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { TopicStructure, ActivityStep, ActivityGuide, QuizQuestion } from "./types.ts";
+import { TopicStructure, ActivityStep, ActivityGuide, QuizQuestion } from "./types";
 
 // Always use the process.env.API_KEY string directly when initializing the @google/genai client instance.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });

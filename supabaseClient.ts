@@ -1,11 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Access variables via process.env which is shimmed in index.html and injected by Vercel/Vite
+/**
+ * Access variables from process.env. 
+ * These are injected by the build system (Vite) or the hosting platform (Vercel).
+ */
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://placeholder.supabase.co');
+// Strict check for valid configuration
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl && 
+  supabaseAnonKey && 
+  supabaseUrl !== 'https://placeholder.supabase.co' &&
+  !supabaseUrl.includes('placeholder')
+);
 
+// Fallbacks prevent library initialization crashes
 const clientUrl = supabaseUrl || 'https://placeholder.supabase.co';
 const clientKey = supabaseAnonKey || 'placeholder-key';
 

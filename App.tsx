@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { UserState, TopicStructure, EcoShift } from './types.ts';
-import { authService } from './authService.ts';
-import { isSupabaseConfigured } from './supabaseClient.ts';
-import Header from './components/Header.tsx';
-import Navigation from './components/Navigation.tsx';
-import AuthPage from './components/AuthPage.tsx';
+import { UserState, TopicStructure, EcoShift } from './types';
+import { authService } from './authService';
+import { isSupabaseConfigured } from './supabaseClient';
+import Header from './components/Header';
+import Navigation from './components/Navigation';
+import AuthPage from './components/AuthPage';
 
-import MindModule from './components/modules/MindModule.tsx';
-import SkillsModule from './components/modules/SkillsModule.tsx';
-import EcoModule from './components/modules/EcoModule.tsx';
+import MindModule from './components/modules/MindModule';
+import SkillsModule from './components/modules/SkillsModule';
+import EcoModule from './components/modules/EcoModule';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -28,7 +28,7 @@ const App: React.FC = () => {
     let mounted = true;
 
     // Strict Auth Synchronization
-    const { data: { subscription } } = authService.onAuthStateChange((user) => {
+    const authListener = authService.onAuthStateChange((user) => {
       if (mounted) {
         setCurrentUser(user);
         setLoading(false);
@@ -37,7 +37,9 @@ const App: React.FC = () => {
 
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
+      if (authListener?.data?.subscription) {
+        authListener.data.subscription.unsubscribe();
+      }
     };
   }, []);
 
