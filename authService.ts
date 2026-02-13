@@ -1,4 +1,3 @@
-
 import { UserState } from './types';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
@@ -43,15 +42,15 @@ export const authService = {
     if (error) throw error;
     
     if (data.user) {
-      // Initialize the user profile with the default optimization state
+      // Initialize user profile in the database
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({ 
+        .upsert({ 
           id: data.user.id, 
           email: data.user.email, 
           state: DEFAULT_STATE 
         });
-      if (profileError) console.error("Profile creation error:", profileError);
+      if (profileError) console.error("Profile initialization failed:", profileError);
     }
     return data.user;
   },
@@ -95,11 +94,10 @@ export const authService = {
       saveLocalState(state);
       return;
     }
-    const { error } = await supabase
+    await supabase
       .from('profiles')
       .update({ state })
       .eq('id', userId);
-    if (error) console.error("Error saving state:", error);
   },
 
   onAuthStateChange: (callback: (user: any) => void) => {
