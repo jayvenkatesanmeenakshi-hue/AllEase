@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserState, TopicStructure, EcoShift } from './types.ts';
-import { authService } from './authService.ts';
-import { isSupabaseConfigured } from './supabaseClient.ts';
-import Header from './components/Header.tsx';
-import Navigation from './components/Navigation.tsx';
-import MindModule from './components/modules/MindModule.tsx';
-import SkillsModule from './components/modules/SkillsModule.tsx';
-import EcoModule from './components/modules/EcoModule.tsx';
-import AuthPage from './components/AuthPage.tsx';
+import { UserState, TopicStructure, EcoShift } from './types';
+import { authService } from './authService';
+import { isSupabaseConfigured } from './supabaseClient';
+import Header from './components/Header';
+import Navigation from './components/Navigation';
+import MindModule from './components/modules/MindModule';
+import SkillsModule from './components/modules/SkillsModule';
+import EcoModule from './components/modules/EcoModule';
+import AuthPage from './components/AuthPage';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -25,9 +25,10 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initializing auth state and handling guest auto-login if Supabase is missing
+    // Handling auth state and guest auto-login
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
       setCurrentUser(user);
+      // If no user is found and it's not guest-ready yet, we still set loading false
       if (!user) {
         setLoading(false);
       }
@@ -53,7 +54,7 @@ const App: React.FC = () => {
     fetchState();
   }, [currentUser]);
 
-  // Debounced save to handle persistent storage (Local or Supabase)
+  // Debounced persistence logic
   useEffect(() => {
     const timer = setTimeout(() => {
       if (currentUser) {
@@ -100,13 +101,12 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Initialising AllEase Hub...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Activating AllEase Hub...</p>
         </div>
       </div>
     );
   }
 
-  // If no user and not guest-logged in yet
   if (!currentUser) return <AuthPage onAuthSuccess={() => {}} />;
 
   return (
@@ -118,7 +118,7 @@ const App: React.FC = () => {
           <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Guest Mode Active • Local Data Storage
+               Guest Mode Active • Local Session
              </p>
           </div>
         )}
@@ -151,7 +151,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase Optimization Engine v1.0.5 • {isSupabaseConfigured ? 'Sync Active' : 'Offline Instance'}
+          AllEase Optimization Engine v1.0.6 • {isSupabaseConfigured ? 'Cloud Link: ON' : 'Cloud Link: OFF'}
         </footer>
       </div>
     </div>

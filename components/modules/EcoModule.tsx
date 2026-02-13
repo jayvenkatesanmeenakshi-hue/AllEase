@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { EcoShift, ActivityGuide } from '../../types.ts';
-import { getActivityGuide } from '../../geminiService.ts';
-import InputArea from '../InputArea.tsx';
-import HistoryList from '../HistoryList.tsx';
+import { EcoShift, ActivityGuide } from '../../types';
+import { getActivityGuide } from '../../geminiService';
+import InputArea from '../InputArea';
+import HistoryList from '../HistoryList';
 
 interface EcoModuleProps {
   history: EcoShift[];
@@ -172,7 +172,7 @@ const EcoModule: React.FC<EcoModuleProps> = ({ history, onComplete }) => {
         <div className="flex items-center gap-8 mb-16 px-6">
           <h2 className="text-3xl font-black tracking-tighter text-slate-900 uppercase leading-none">History Archives</h2>
           <div className="h-[1px] flex-1 bg-slate-100"></div>
-          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mono">DB_v1.0.5</span>
+          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mono">DB_v1.0.6</span>
         </div>
         <HistoryList history={history} />
       </section>
