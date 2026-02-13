@@ -1,16 +1,13 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Defensive check for process environment in browser contexts
 const getEnvVar = (key: string): string | undefined => {
   try {
-    if (typeof process !== 'undefined' && process.env) {
-      return process.env[key];
-    }
+    // Access window.process to be safer in some browser environments
+    const env = (window as any).process?.env || (typeof process !== 'undefined' ? process.env : {});
+    return env[key];
   } catch (e) {
-    // Fail silently
+    return undefined;
   }
-  return undefined;
 };
 
 const supabaseUrl = getEnvVar('SUPABASE_URL');
