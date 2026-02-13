@@ -11,7 +11,7 @@ const DEFAULT_STATE: UserState = {
   dailyActionCount: 0
 };
 
-const LOCAL_STORAGE_KEY = 'allease_guest_state';
+const LOCAL_STORAGE_KEY = 'allease_state_v1';
 
 const getLocalState = (): UserState => {
   const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -30,8 +30,13 @@ const saveLocalState = (state: UserState) => {
 export const authService = {
   register: async (email: string, pass: string) => {
     if (!isSupabaseConfigured) {
-      console.warn("Supabase not configured. Using Guest Session.");
-      return { id: 'guest_user', email: 'guest@allease.ai' };
+      // If Supabase isn't setup, we simulate a successful login for the requested email
+      console.warn("Supabase not configured. Simulating registration.");
+      const guestUser = { id: 'guest_' + btoa(email), email };
+      localStorage.setItem('allease_active_session', JSON.stringify(guestUser));
+      // Reload or trigger a state update manually since we aren't using Supabase's real listener
+      window.location.reload();
+      return guestUser;
     }
     
     const { data, error } = await supabase.auth.signUp({ 
@@ -42,7 +47,6 @@ export const authService = {
     if (error) throw error;
     
     if (data.user) {
-      // Initialize user profile in the database
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({ 
@@ -57,7 +61,11 @@ export const authService = {
 
   login: async (email: string, pass: string) => {
     if (!isSupabaseConfigured) {
-      return { id: 'guest_user', email: 'guest@allease.ai' };
+      console.warn("Supabase not configured. Simulating login.");
+      const guestUser = { id: 'guest_' + btoa(email), email };
+      localStorage.setItem('allease_active_session', JSON.stringify(guestUser));
+      window.location.reload();
+      return guestUser;
     }
     const { data, error } = await supabase.auth.signInWithPassword({ 
       email, 
@@ -68,15 +76,15 @@ export const authService = {
   },
 
   logout: async () => {
+    localStorage.removeItem('allease_active_session');
     if (isSupabaseConfigured) {
       await supabase.auth.signOut();
-    } else {
-      window.location.reload(); 
     }
+    window.location.reload();
   },
 
   getUserState: async (userId: string): Promise<UserState> => {
-    if (!isSupabaseConfigured || userId === 'guest_user') {
+    if (!isSupabaseConfigured || userId.startsWith('guest_')) {
       return getLocalState();
     }
     const { data, error } = await supabase
@@ -90,7 +98,7 @@ export const authService = {
   },
 
   saveUserState: async (userId: string, state: UserState) => {
-    if (!isSupabaseConfigured || userId === 'guest_user') {
+    if (!isSupabaseConfigured || userId.startsWith('guest_')) {
       saveLocalState(state);
       return;
     }
@@ -101,13 +109,28 @@ export const authService = {
   },
 
   onAuthStateChange: (callback: (user: any) => void) => {
-    if (!isSupabaseConfigured) {
-        // Fallback for guest mode
-        setTimeout(() => callback({ id: 'guest_user', email: 'guest@allease.ai' }), 0);
-        return { data: { subscription: { unsubscribe: () => {} } } };
+    // Check local session first
+    const localSession = localStorage.getItem('allease_active_session');
+    if (localSession) {
+      try {
+        const user = JSON.parse(localSession);
+        setTimeout(() => callback(user), 0);
+      } catch (e) {
+        localStorage.removeItem('allease_active_session');
+      }
     }
-    return supabase.auth.onAuthStateChange((_event, session) => {
+
+    if (!isSupabaseConfigured) {
+      if (!localSession) {
+        setTimeout(() => callback(null), 0);
+      }
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });
+
+    return { data: { subscription } };
   }
 };

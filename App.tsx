@@ -27,7 +27,7 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    // Central Auth Sync
+    // Strict Auth Synchronization
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
       if (mounted) {
         setCurrentUser(user);
@@ -44,7 +44,7 @@ const App: React.FC = () => {
   // Persistent User State Synchronization
   useEffect(() => {
     const fetchState = async () => {
-      if (currentUser && currentUser.id !== 'guest_user') {
+      if (currentUser) {
         try {
           const state = await authService.getUserState(currentUser.id);
           if (state) setUserState(state);
@@ -105,15 +105,15 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="text-center space-y-6">
           <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto shadow-xl"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-[0.5em] mono animate-pulse">Initializing Core Engine...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-[0.5em] mono animate-pulse">Initializing Secure Context...</p>
         </div>
       </div>
     );
   }
 
-  // ENFORCED LOGIN GATE
+  // ENFORCED LOGIN GATE - ABSOLUTELY NO ENTRY WITHOUT USER
   if (!currentUser) {
-    return <AuthPage onAuthSuccess={() => {}} />;
+    return <AuthPage onAuthSuccess={(email) => console.log(`Session authorized for: ${email}`)} />;
   }
 
   return (
@@ -125,7 +125,7 @@ const App: React.FC = () => {
           <div className="mb-8 px-8 py-3 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.3em] flex items-center gap-3">
                <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-               Sandbox Protocol Active • Guest Environment
+               Local Sandbox Mode • Database Emulation Active
              </p>
           </div>
         )}
@@ -162,7 +162,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[11px] text-slate-300 font-black uppercase tracking-[0.5em] mono pb-12">
-          AllEase Optimization Cloud • Secure Transaction ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}
+          AllEase Optimization Cloud • Active User: {currentUser.email}
         </footer>
       </div>
     </div>
