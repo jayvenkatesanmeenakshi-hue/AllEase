@@ -102,6 +102,7 @@ export const authService = {
 
   onAuthStateChange: (callback: (user: any) => void) => {
     if (!isSupabaseConfigured) {
+        // Fallback for guest mode
         setTimeout(() => callback({ id: 'guest_user', email: 'guest@allease.ai' }), 0);
         return { data: { subscription: { unsubscribe: () => {} } } };
     }

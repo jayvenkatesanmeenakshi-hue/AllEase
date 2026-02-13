@@ -27,26 +27,21 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      // Setup the auth listener
-      const { data: { subscription } } = authService.onAuthStateChange((user) => {
-        if (mounted) {
-          setCurrentUser(user);
-          setLoading(false);
-        }
-      });
+    // Central Auth Sync
+    const { data: { subscription } } = authService.onAuthStateChange((user) => {
+      if (mounted) {
+        setCurrentUser(user);
+        setLoading(false);
+      }
+    });
 
-      return () => {
-        mounted = false;
-        subscription?.unsubscribe();
-      };
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
     };
-
-    initAuth();
-    return () => { mounted = false; };
   }, []);
 
-  // Sync user state from DB once logged in
+  // Persistent User State Synchronization
   useEffect(() => {
     const fetchState = async () => {
       if (currentUser && currentUser.id !== 'guest_user') {
@@ -71,7 +66,6 @@ const App: React.FC = () => {
         dailyActionCount: prev.dailyActionCount + 1
       };
       
-      // Auto-save state change
       if (currentUser) {
         authService.saveUserState(currentUser.id, newState);
       }
@@ -108,17 +102,19 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Activating Optimization Engine...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="text-center space-y-6">
+          <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto shadow-xl"></div>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-[0.5em] mono animate-pulse">Initializing Core Engine...</p>
         </div>
       </div>
     );
   }
 
-  // If no user, show the high-fidelity Auth Portal
-  if (!currentUser) return <AuthPage onAuthSuccess={() => {}} />;
+  // ENFORCED LOGIN GATE
+  if (!currentUser) {
+    return <AuthPage onAuthSuccess={() => {}} />;
+  }
 
   return (
     <div className="min-h-screen pb-40 bg-[#F8FAFC] text-[#1E293B] selection:bg-[#0D9488] selection:text-white fade-entry">
@@ -126,10 +122,10 @@ const App: React.FC = () => {
         <Header score={userState.impactScore} onLogout={() => authService.logout()} />
         
         {!isSupabaseConfigured && (
-          <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
-             <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
-               <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Local Sandbox • Guest Mode
+          <div className="mb-8 px-8 py-3 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
+             <p className="text-[10px] font-black text-amber-700 uppercase tracking-[0.3em] flex items-center gap-3">
+               <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+               Sandbox Protocol Active • Guest Environment
              </p>
           </div>
         )}
@@ -165,8 +161,8 @@ const App: React.FC = () => {
 
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
-        <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase v1.1.2 • Deployment Active
+        <footer className="mt-24 text-center text-[11px] text-slate-300 font-black uppercase tracking-[0.5em] mono pb-12">
+          AllEase Optimization Cloud • Secure Transaction ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}
         </footer>
       </div>
     </div>
