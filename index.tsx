@@ -6,12 +6,16 @@ import App from './App';
 const rootElement = document.getElementById('root');
 
 if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+  try {
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  } catch (err) {
+    console.error("AllEase: Render failure during hydration:", err);
+  }
 } else {
-  console.error("Fatal: Root element not found.");
+  console.error("AllEase: Fatal error - Root element not found in DOM.");
 }
