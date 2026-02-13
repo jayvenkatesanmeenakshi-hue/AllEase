@@ -38,7 +38,7 @@ const App: React.FC = () => {
     });
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscription) subscription.unsubscribe();
     };
   }, []);
 
@@ -57,7 +57,7 @@ const App: React.FC = () => {
   }, [currentUser]);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentUser.id !== 'guest_user') {
       const timer = setTimeout(() => {
         authService.saveUserState(currentUser.id, userState);
       }, 2000);
@@ -102,7 +102,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Booting Systems...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Initializing Environment...</p>
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ const App: React.FC = () => {
           <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Guest Mode • Local Only
+               Guest Mode • Session Not Synced
              </p>
           </div>
         )}
@@ -152,7 +152,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase v1.0.8 • {isSupabaseConfigured ? 'Sync: Enabled' : 'Sync: Local'}
+          AllEase Optimization Engine v1.0.9
         </footer>
       </div>
     </div>
