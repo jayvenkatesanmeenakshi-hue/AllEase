@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { authService } from '../authService';
 
@@ -25,7 +24,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       }
       onAuthSuccess(email);
     } catch (err: any) {
-      setError(err.message || "Authentication sequence failed.");
+      setError(err.message || "Authentication sequence failed. Check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +58,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             )}
             
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Identity Token (Email)</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Identity (Email)</label>
               <input
                 type="email"
                 required
@@ -91,7 +90,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-cyan-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
               <span className="relative z-10">
-                {loading ? 'Decrypting...' : isLogin ? 'Authorize Entry' : 'Create Profile'}
+                {loading ? 'Processing...' : isLogin ? 'Authorize Entry' : 'Initialize Profile'}
               </span>
             </button>
           </form>
@@ -109,7 +108,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
         </div>
         
         <p className="mt-8 text-center text-[9px] text-slate-300 font-black uppercase tracking-[0.5em] mono">
-          Encryption Active • v1.1.2-PRD
+          Vite • Supabase • v1.1.2-PRD
         </p>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserState, TopicStructure, EcoShift } from './types';
 import { authService } from './authService';
@@ -7,7 +6,6 @@ import Header from './components/Header';
 import Navigation from './components/Navigation';
 import AuthPage from './components/AuthPage';
 
-// Import modules directly for maximum stability during build debugging
 import MindModule from './components/modules/MindModule';
 import SkillsModule from './components/modules/SkillsModule';
 import EcoModule from './components/modules/EcoModule';
@@ -30,14 +28,7 @@ const App: React.FC = () => {
     let mounted = true;
 
     const initAuth = async () => {
-      if (!isSupabaseConfigured) {
-        if (mounted) {
-          setCurrentUser({ id: 'guest_user', email: 'guest@allease.ai' });
-          setLoading(false);
-        }
-        return;
-      }
-
+      // Setup the auth listener
       const { data: { subscription } } = authService.onAuthStateChange((user) => {
         if (mounted) {
           setCurrentUser(user);
@@ -55,14 +46,15 @@ const App: React.FC = () => {
     return () => { mounted = false; };
   }, []);
 
+  // Sync user state from DB once logged in
   useEffect(() => {
     const fetchState = async () => {
-      if (currentUser) {
+      if (currentUser && currentUser.id !== 'guest_user') {
         try {
           const state = await authService.getUserState(currentUser.id);
-          if (state && currentUser) setUserState(state);
+          if (state) setUserState(state);
         } catch (err) {
-          console.error("Failed to load user state", err);
+          console.error("Failed to load persistent user state", err);
         }
       }
     };
@@ -72,12 +64,19 @@ const App: React.FC = () => {
   const incrementImpact = (percentGain: number) => {
     setUserState(prev => {
       const newScore = Math.min(100, Math.round(prev.impactScore + percentGain));
-      return {
+      const newState = {
         ...prev,
         impactScore: newScore,
         lastActionTimestamp: Date.now(),
         dailyActionCount: prev.dailyActionCount + 1
       };
+      
+      // Auto-save state change
+      if (currentUser) {
+        authService.saveUserState(currentUser.id, newState);
+      }
+      
+      return newState;
     });
   };
 
@@ -85,19 +84,25 @@ const App: React.FC = () => {
     setUserState(prev => {
       const exists = prev.exploredTopics.find(t => t.topic.toLowerCase() === topic.topic.toLowerCase());
       if (exists) return prev;
-      return {
+      const newState = {
         ...prev,
         exploredTopics: [topic, ...prev.exploredTopics].slice(0, 10)
       };
+      if (currentUser) authService.saveUserState(currentUser.id, newState);
+      return newState;
     });
     incrementImpact(1);
   };
 
   const handleOptimizationComplete = (shift: EcoShift) => {
-    setUserState(prev => ({
-      ...prev,
-      ecoHistory: [shift, ...prev.ecoHistory].slice(0, 50)
-    }));
+    setUserState(prev => {
+      const newState = {
+        ...prev,
+        ecoHistory: [shift, ...prev.ecoHistory].slice(0, 50)
+      };
+      if (currentUser) authService.saveUserState(currentUser.id, newState);
+      return newState;
+    });
     incrementImpact(3);
   };
 
@@ -106,12 +111,13 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Activating Engine...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Activating Optimization Engine...</p>
         </div>
       </div>
     );
   }
 
+  // If no user, show the high-fidelity Auth Portal
   if (!currentUser) return <AuthPage onAuthSuccess={() => {}} />;
 
   return (
@@ -123,7 +129,7 @@ const App: React.FC = () => {
           <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Guest Mode • Local Only
+               Local Sandbox • Guest Mode
              </p>
           </div>
         )}
@@ -140,7 +146,11 @@ const App: React.FC = () => {
               moodHistory={userState.moodHistory} 
               onMoodLog={(mood) => {
                 const log = { id: Date.now().toString(), mood, timestamp: Date.now() };
-                setUserState(prev => ({ ...prev, moodHistory: [log, ...prev.moodHistory].slice(0, 50) }));
+                setUserState(prev => {
+                  const newState = { ...prev, moodHistory: [log, ...prev.moodHistory].slice(0, 50) };
+                  if (currentUser) authService.saveUserState(currentUser.id, newState);
+                  return newState;
+                });
                 incrementImpact(1);
               }}
               onBreathComplete={() => incrementImpact(2)}
@@ -156,7 +166,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase v1.1.2 • Operational
+          AllEase v1.1.2 • Deployment Active
         </footer>
       </div>
     </div>
