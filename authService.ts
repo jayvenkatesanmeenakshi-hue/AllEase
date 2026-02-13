@@ -1,6 +1,6 @@
 
 import { UserState } from './types';
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const DEFAULT_STATE: UserState = {
   impactScore: 1,
@@ -14,10 +14,10 @@ const DEFAULT_STATE: UserState = {
 
 export const authService = {
   register: async (email: string, pass: string) => {
+    if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
     const { data, error } = await supabase.auth.signUp({ email, password: pass });
     if (error) throw error;
     
-    // Create profile entry
     if (data.user) {
       const { error: profileError } = await supabase
         .from('profiles')
@@ -28,16 +28,20 @@ export const authService = {
   },
 
   login: async (email: string, pass: string) => {
+    if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
     const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
     return data.user;
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
   },
 
   getUserState: async (userId: string): Promise<UserState> => {
+    if (!isSupabaseConfigured) return DEFAULT_STATE;
     const { data, error } = await supabase
       .from('profiles')
       .select('state')
@@ -49,6 +53,7 @@ export const authService = {
   },
 
   saveUserState: async (userId: string, state: UserState) => {
+    if (!isSupabaseConfigured) return;
     const { error } = await supabase
       .from('profiles')
       .update({ state })
@@ -57,6 +62,10 @@ export const authService = {
   },
 
   onAuthStateChange: (callback: (user: any) => void) => {
+    if (!isSupabaseConfigured) {
+        // Return a mock subscription if not configured
+        return { data: { subscription: { unsubscribe: () => {} } } };
+    }
     return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });

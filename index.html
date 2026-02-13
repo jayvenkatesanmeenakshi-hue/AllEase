@@ -4,24 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoHabit AI | Sustainable Excellence</title>
+    <title>AllEase | Peak Optimization</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #059669;
-            --primary-light: #D1FAE5;
+            --primary: #0D9488;
+            --primary-light: #CCFBF1;
             --bg-main: #FFFFFF;
-            --bg-secondary: #F9FAFB;
-            --text-main: #064E3B;
-            --border: #E5E7EB;
+            --bg-secondary: #F8FAFC;
+            --text-main: #1E293B;
+            --border: #E2E8F0;
         }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #F8FAF9;
+            background-color: #F8FAFC;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(5, 150, 105, 0.04) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.04) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.03) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(30, 41, 59, 0.03) 0px, transparent 50%);
             color: var(--text-main);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
@@ -29,35 +29,27 @@
         }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glass-premium {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.03);
         }
-        .real-shadow {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.06);
-        }
-        .active-indicator {
-            background: var(--primary);
-            box-shadow: 0 0 20px rgba(5, 150, 105, 0.4);
+        .hero-text {
+            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
         
         .fade-entry {
-            animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero-text {
-            background: linear-gradient(135deg, #064E3B 0%, #065F46 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
     </style>
 <script type="importmap">
@@ -74,5 +66,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- Entry point for the React application -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

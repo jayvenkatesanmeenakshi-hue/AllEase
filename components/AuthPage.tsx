@@ -32,15 +32,15 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-emerald-50/30">
-      <div className="max-w-md w-full bg-white p-12 rounded-[2.5rem] border border-emerald-100 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-600"></div>
+    <div className="min-h-screen flex items-center justify-center px-6 bg-slate-50">
+      <div className="max-w-md w-full bg-white p-12 rounded-[2.5rem] border border-slate-100 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-teal-600"></div>
         
         <div className="text-center mb-10">
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 mb-2">
-            Eco<span className="text-emerald-600">Habit</span>
+            All<span className="text-teal-600">Ease</span>
           </h1>
-          <p className="text-emerald-800/40 font-bold uppercase tracking-widest text-[10px] mono">Sustainable Identity Portal</p>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mono">Optimization Access Portal</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -51,26 +51,26 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           )}
           
           <div className="space-y-2">
-            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none text-slate-900 focus:border-emerald-600 focus:bg-white transition-all text-sm font-semibold"
-              placeholder="eco@conscious.com"
+              className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none text-slate-900 focus:border-teal-600 focus:bg-white transition-all text-sm font-semibold"
+              placeholder="user@allease.ai"
               disabled={loading}
             />
           </div>
 
           <div className="space-y-2">
-            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Secure Key</label>
+            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Key</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none text-slate-900 focus:border-emerald-600 focus:bg-white transition-all text-sm font-semibold"
+              className="w-full bg-slate-50 border border-slate-200 px-6 py-4 rounded-2xl outline-none text-slate-900 focus:border-teal-600 focus:bg-white transition-all text-sm font-semibold"
               placeholder="••••••••"
               disabled={loading}
             />
@@ -79,18 +79,18 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-emerald-900 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all duration-300 active:scale-95 shadow-md disabled:bg-slate-300"
+            className="w-full py-4 bg-slate-900 hover:bg-teal-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all duration-300 active:scale-95 shadow-md disabled:bg-slate-300"
           >
-            {loading ? 'Validating...' : isLogin ? 'Access Hub' : 'Plant Seed Profile'}
+            {loading ? 'Authenticating...' : isLogin ? 'Enter Hub' : 'Create Profile'}
           </button>
         </form>
 
         <div className="mt-10 text-center border-t border-slate-100 pt-8">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-[10px] font-black text-slate-400 hover:text-emerald-600 uppercase tracking-widest transition-colors"
+            className="text-[10px] font-black text-slate-400 hover:text-teal-600 uppercase tracking-widest transition-colors"
           >
-            {isLogin ? "Request New Account" : "Return to Access"}
+            {isLogin ? "Need an Account?" : "Back to Login"}
           </button>
         </div>
       </div>

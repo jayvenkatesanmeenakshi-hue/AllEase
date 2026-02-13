@@ -1,6 +1,6 @@
 {
-  "name": "EcoHabit AI",
-  "description": "High-performance eco-conscious lifestyle optimization dashboard.",
+  "name": "AllEase",
+  "description": "High-performance personal optimization and lifestyle management dashboard.",
   "requestFramePermissions": [
     "geolocation"
   ]
