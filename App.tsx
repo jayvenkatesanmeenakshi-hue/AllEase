@@ -1,14 +1,23 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { UserState, TopicStructure, EcoShift } from './types';
 import { authService } from './authService';
 import { isSupabaseConfigured } from './supabaseClient';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
-import MindModule from './components/modules/MindModule';
-import SkillsModule from './components/modules/SkillsModule';
-import EcoModule from './components/modules/EcoModule';
 import AuthPage from './components/AuthPage';
+
+// Dynamically import modules to reduce initial chunk size
+const MindModule = lazy(() => import('./components/modules/MindModule'));
+const SkillsModule = lazy(() => import('./components/modules/SkillsModule'));
+const EcoModule = lazy(() => import('./components/modules/EcoModule'));
+
+const ModuleLoader = () => (
+  <div className="w-full py-20 flex flex-col items-center justify-center space-y-4">
+    <div className="w-8 h-8 border-2 border-teal-600/20 border-t-teal-600 rounded-full animate-spin"></div>
+    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Loading Module Assets...</p>
+  </div>
+);
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -25,7 +34,6 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Immediate fallback for guest mode if cloud is not active
     if (!isSupabaseConfigured) {
       setCurrentUser({ id: 'guest_user', email: 'guest@allease.ai' });
       setLoading(false);
@@ -102,7 +110,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Initializing Environment...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Initializing Core...</p>
         </div>
       </div>
     );
@@ -119,40 +127,42 @@ const App: React.FC = () => {
           <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Guest Mode • Session Not Synced
+               Guest Mode • Local Instance
              </p>
           </div>
         )}
 
-        <main className="mt-12">
-          {activeTab === 'eco' && (
-            <EcoModule 
-              history={userState.ecoHistory}
-              onComplete={handleOptimizationComplete}
-            />
-          )}
-          {activeTab === 'mind' && (
-            <MindModule 
-              moodHistory={userState.moodHistory} 
-              onMoodLog={(mood) => {
-                const log = { id: Date.now().toString(), mood, timestamp: Date.now() };
-                setUserState(prev => ({ ...prev, moodHistory: [log, ...prev.moodHistory].slice(0, 50) }));
-                incrementImpact(1);
-              }}
-              onBreathComplete={() => incrementImpact(2)}
-            />
-          )}
-          {activeTab === 'skills' && (
-            <SkillsModule 
-              onTopicExplored={handleTopicExplored}
-            />
-          )}
+        <main className="mt-12 min-h-[60vh]">
+          <Suspense fallback={<ModuleLoader />}>
+            {activeTab === 'eco' && (
+              <EcoModule 
+                history={userState.ecoHistory}
+                onComplete={handleOptimizationComplete}
+              />
+            )}
+            {activeTab === 'mind' && (
+              <MindModule 
+                moodHistory={userState.moodHistory} 
+                onMoodLog={(mood) => {
+                  const log = { id: Date.now().toString(), mood, timestamp: Date.now() };
+                  setUserState(prev => ({ ...prev, moodHistory: [log, ...prev.moodHistory].slice(0, 50) }));
+                  incrementImpact(1);
+                }}
+                onBreathComplete={() => incrementImpact(2)}
+              />
+            )}
+            {activeTab === 'skills' && (
+              <SkillsModule 
+                onTopicExplored={handleTopicExplored}
+              />
+            )}
+          </Suspense>
         </main>
 
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase Optimization Engine v1.0.9
+          AllEase Optimization Engine v1.1.0 • Build: Optimized
         </footer>
       </div>
     </div>
