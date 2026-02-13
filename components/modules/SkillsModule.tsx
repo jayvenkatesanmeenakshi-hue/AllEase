@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { TopicStructure } from '../../types.ts';
-import { getTopicStructure, getSubtopicExplanation } from '../../geminiService.ts';
+import { TopicStructure } from '../../types';
+import { getTopicStructure, getSubtopicExplanation } from '../../geminiService';
 
 interface SkillsModuleProps {
   onTopicExplored: (topic: TopicStructure) => void;
@@ -132,6 +132,12 @@ const SkillsModule: React.FC<SkillsModuleProps> = ({ onTopicExplored }) => {
                 </button>
               ))}
             </div>
+
+            {explanation && (
+              <div className="mt-20 p-12 bg-slate-50 border-l-8 border-teal-600 rounded-r-[3rem] animate-in slide-in-from-left duration-500">
+                <p className="text-slate-900 text-lg font-medium leading-relaxed">{explanation}</p>
+              </div>
+            )}
           </section>
         </div>
       )}
