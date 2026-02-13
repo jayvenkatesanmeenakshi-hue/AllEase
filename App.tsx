@@ -25,16 +25,24 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handling auth state and guest auto-login
-    const { data: { subscription } } = authService.onAuthStateChange((user) => {
-      setCurrentUser(user);
-      // If no user is found and it's not guest-ready yet, we still set loading false
-      if (!user) {
+    // Safety fallback to prevent infinite loading if auth listener doesn't fire
+    const loadingTimeout = setTimeout(() => {
+      if (loading && !currentUser) {
+        console.warn("Auth check timed out, proceeding to entry state.");
         setLoading(false);
       }
+    }, 3000);
+
+    const { data: { subscription } } = authService.onAuthStateChange((user) => {
+      clearTimeout(loadingTimeout);
+      setCurrentUser(user);
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -54,7 +62,6 @@ const App: React.FC = () => {
     fetchState();
   }, [currentUser]);
 
-  // Debounced persistence logic
   useEffect(() => {
     const timer = setTimeout(() => {
       if (currentUser) {
@@ -96,12 +103,12 @@ const App: React.FC = () => {
     incrementImpact(3);
   };
 
-  if (loading && currentUser) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Activating AllEase Hub...</p>
+          <p className="text-[10px] font-black text-teal-800 uppercase tracking-widest">Waking AllEase Systems...</p>
         </div>
       </div>
     );
@@ -118,7 +125,7 @@ const App: React.FC = () => {
           <div className="mb-8 px-6 py-2 bg-amber-50 border border-amber-100 rounded-full w-fit mx-auto shadow-sm">
              <p className="text-[9px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-               Guest Mode Active • Local Session
+               Guest Instance • Local Session
              </p>
           </div>
         )}
@@ -151,7 +158,7 @@ const App: React.FC = () => {
         <Navigation activeTab={activeTab} setActiveTab={(tab: any) => setActiveTab(tab)} />
 
         <footer className="mt-24 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">
-          AllEase Optimization Engine v1.0.6 • {isSupabaseConfigured ? 'Cloud Link: ON' : 'Cloud Link: OFF'}
+          AllEase Optimization Engine v1.0.7 • {isSupabaseConfigured ? 'Sync: ACTIVE' : 'Sync: STANDALONE'}
         </footer>
       </div>
     </div>
